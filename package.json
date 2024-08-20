@@ -2,7 +2,7 @@
   "name": "SIMPANEL",
   "productName": "SIMPANEL",
   "version": "1.0.0",
-  "description": "SIMPANEL App is a desktop application designed to connect with Microsoft Flight Simulator (MSFS) through a web interface. This application facilitates real-time control and monitoring of various simulator parameters by leveraging WebSocket technology for seamless communication over a local network (LAN). The app provides an intuitive and user-friendly interface, enabling users to interact with MSFS's controls and settings directly from their browser. With SIMPANEL App, users can customize and manage their simulation experience with precision and ease.",
+  "desc": "SIMPANEL App is a desktop application designed to connect with Microsoft Flight Simulator (MSFS) through a web interface. This application facilitates real-time control and monitoring of various simulator parameters by leveraging WebSocket technology for seamless communication over a local network (LAN). The app provides an intuitive and user-friendly interface, enabling users to interact with MSFS's controls and settings directly from their browser. With SIMPANEL App, users can customize and manage their simulation experience with precision and ease.",
   "main": "./src/main.js",
   "type": "module",
   "scripts": {
@@ -10,19 +10,19 @@
     "build": "electron-builder"
   },
   "build": {
-    "appId": "simpanel",
+    "appId": "SIMPANEL",
     "win": {
       "target": [
         "nsis"
       ],
-      "icon": "./src/assets/images/icon.ico"
+      "icon": "./dist/icon.ico"
     },
     "nsis": {
-      "oneClick": true,
-      "installerIcon": "./src/assets/images/icon.ico",
-      "uninstallerIcon": "./src/assets/images/icon.ico",
+      "oneClick": false,
+      "installerIcon": "./dist/icon.ico",
+      "uninstallerIcon": "./dist/icon.ico",
       "uninstallDisplayName": "simpanel-uninstaller",
-      "allowToChangeInstallationDirectory": false
+      "allowToChangeInstallationDirectory": true
     }
   },
   "author": "kndxiu <kontakt@kndxiu.xyz>",
