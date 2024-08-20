@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <meta
+      http-equiv="X-Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <link rel="stylesheet" href="output.css" />
+    <title>SIMPANEL</title>
+  </head>
+  <body>
+    <div id="root" class="h-screen flex flex-col">
+      <div
+        class="w-full p-2 h-12 flex justify-between items-center bg-neutral-800 border-b border-neutral-800 webkit-app-region-drag"
+      >
+        <div class="flex gap-x-2 items-center">
+          <h1 class="text-2xl font-bold text-neutral-200">SIMPANEL</h1>
+          <div
+            class="rounded-full bg-red-500 w-2 h-2 transition relative cursor-pointer webkit-app-region-no-drag has-tooltip"
+            id="msfs-status"
+          >
+            <div
+              class="absolute p-1 text-sm text-neutral-200 rounded border bg-neutral-800 border-neutral-700 top-3 left-1/2 transition-all whitespace-nowrap"
+            >
+              MSFS Disconnected
+            </div>
+          </div>
+          <div
+            class="rounded-full bg-green-500 w-2 h-2 transition-bg relative cursor-pointer webkit-app-region-no-drag has-tooltip"
+            id="panel-status"
+          >
+            <div
+              class="absolute p-1 text-sm text-neutral-200 rounded border bg-neutral-800 border-neutral-700 top-3 left-1/2 transition-all whitespace-nowrap"
+            >
+              Panel Connected
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <svg
+            id="minimizeButton"
+            class="cursor-pointer webkit-app-region-no-drag"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12H19"
+              stroke="#E5E5E5"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <svg
+            id="closeButton"
+            class="cursor-pointer webkit-app-region-no-drag"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18.0039 5.99219L6.00391 17.9922M6.00391 5.99219L18.0039 17.9922"
+              stroke="#E5E5E5"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+      </div>
+      <div
+        class="bg-neutral-900 flex justify-center items-center flex-col gap-2 px-32 h-full"
+      >
+        <div class="flex gap-2">
+          <div class="relative">
+            <input
+              id="roomCode"
+              readonly
+              class="rounded p-2 text-neutral-200 text-sm border border-neutral-700 bg-neutral-800"
+              type="text"
+            />
+            <svg
+              id="copyButton"
+              class="absolute top-[50%] translate-y-[-50%] right-2 cursor-pointer"
+              width="16"
+              height="18"
+              viewBox="0 0 16 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M11.2992 2.6H12.8992C13.3236 2.6 13.7305 2.76857 14.0306 3.06863C14.3306 3.36869 14.4992 3.77565 14.4992 4.2V15.4C14.4992 15.8243 14.3306 16.2313 14.0306 16.5314C13.7305 16.8314 13.3236 17 12.8992 17H3.29922C2.87487 17 2.46791 16.8314 2.16785 16.5314C1.86779 16.2313 1.69922 15.8243 1.69922 15.4V4.2C1.69922 3.77565 1.86779 3.36869 2.16785 3.06863C2.46791 2.76857 2.87487 2.6 3.29922 2.6H4.89922M5.69922 1H10.4992C10.941 1 11.2992 1.35817 11.2992 1.8V3.4C11.2992 3.84183 10.941 4.2 10.4992 4.2H5.69922C5.25739 4.2 4.89922 3.84183 4.89922 3.4V1.8C4.89922 1.35817 5.25739 1 5.69922 1Z"
+                stroke="#737373"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <button
+            id="startButton"
+            class="rounded bg-sky-400 p-2 w-16 text-sm text-neutral-200"
+          >
+            Start
+          </button>
+          <button
+            id="stopButton"
+            class="rounded bg-sky-400 p-2 w-16 text-sm text-neutral-200 hidden"
+          >
+            Stop
+          </button>
+        </div>
+        <p class="w-full text-sm text-neutral-500 font-normal text-center">
+          Welcome to SimPanel's test version! This early release lets you
+          connect through your browser to the sim and try out the basic
+          features. We're just getting started, so stay tuned for more updates
+          and improvements. Enjoy testing SimPanel!
+        </p>
+        <p class="text-sm text-neutral-700">v1.0.0</p>
+      </div>
+    </div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

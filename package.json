@@ -1,0 +1,56 @@
+{
+  "name": "SIMPANEL",
+  "productName": "SIMPANEL",
+  "version": "1.0.0",
+  "description": "SIMPANEL App is a desktop application designed to connect with Microsoft Flight Simulator (MSFS) through a web interface. This application facilitates real-time control and monitoring of various simulator parameters by leveraging WebSocket technology for seamless communication over a local network (LAN). The app provides an intuitive and user-friendly interface, enabling users to interact with MSFS's controls and settings directly from their browser. With SIMPANEL App, users can customize and manage their simulation experience with precision and ease.",
+  "main": "./src/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "simpanel",
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "./src/assets/images/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "installerIcon": "./src/assets/images/icon.ico",
+      "uninstallerIcon": "./src/assets/images/icon.ico",
+      "uninstallDisplayName": "simpanel-uninstaller",
+      "allowToChangeInstallationDirectory": false
+    }
+  },
+  "author": "kndxiu <kontakt@kndxiu.xyz>",
+  "keywords": [
+    "MSFS",
+    "Microsoft Flight Simulator",
+    "simulation",
+    "web interface",
+    "WebSocket",
+    "LAN",
+    "control panel",
+    "desktop application",
+    "flight simulation",
+    "real-time control",
+    "browser-based",
+    "customization",
+    "user interface",
+    "control management"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "electron": "^31.3.1",
+    "electron-builder": "^24.13.3",
+    "tailwindcss": "^3.4.9"
+  },
+  "dependencies": {
+    "msfs-simconnect-api-wrapper": "^4.5.0",
+    "ws": "^8.18.0"
+  }
+}
