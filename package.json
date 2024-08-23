@@ -50,6 +50,7 @@
     "tailwindcss": "^3.4.9"
   },
   "dependencies": {
+    "express": "^4.19.2",
     "msfs-simconnect-api-wrapper": "^4.5.0",
     "ws": "^8.18.0"
   }

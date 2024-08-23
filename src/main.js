@@ -1,7 +1,8 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "url";
-import WebSocketServer from "./server/server.js";
+import WebSocketServer from "./server/websocketServer.js";
+import "./server/expressServer.js";
 import IP from "./server/ip.js";
 import { MSFS_API } from "msfs-simconnect-api-wrapper";
 
@@ -86,7 +87,7 @@ const init = () => {
     const ipInstance = new IP(localIp);
     const encodedIp = ipInstance.toEncoded();
 
-    websocketServer = new WebSocketServer(8080);
+    websocketServer = new WebSocketServer(8056);
 
     websocketServer.onHostMessage((message) => {
       console.log("Message sent:", message);
