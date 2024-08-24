@@ -570,6 +570,10 @@ video {
   right: 0.5rem;
 }
 
+.top-2 {
+  top: 0.5rem;
+}
+
 .top-3 {
   top: 0.75rem;
 }
@@ -730,6 +734,11 @@ video {
   line-height: 1.25rem;
 }
 
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
 .font-bold {
   font-weight: 700;
 }
@@ -746,6 +755,11 @@ video {
 .text-neutral-500 {
   --tw-text-opacity: 1;
   color: rgb(115 115 115 / var(--tw-text-opacity));
+}
+
+.text-neutral-600 {
+  --tw-text-opacity: 1;
+  color: rgb(82 82 82 / var(--tw-text-opacity));
 }
 
 .text-neutral-700 {
@@ -795,4 +809,8 @@ video {
   transform: translate(-50%, 0px) scale(1);
   opacity: 1;
   visibility: visible;
+}
+
+.hover\:underline:hover {
+  text-decoration-line: underline;
 }

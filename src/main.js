@@ -1,19 +1,64 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "url";
 import WebSocketServer from "./server/websocketServer.js";
 import "./server/expressServer.js";
 import IP from "./server/ip.js";
 import { MSFS_API } from "msfs-simconnect-api-wrapper";
+import fs from "fs/promises";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const loadConfigFromFile = async (filePath) => {
+  try {
+    const data = await fs.readFile(filePath, "utf8");
+    return JSON.parse(data);
+  } catch (err) {
+    console.error("Error reading config file:", err);
+    return null;
+  }
+};
+
+const saveConfigToFile = async (filePath, config) => {
+  try {
+    await fs.writeFile(filePath, JSON.stringify(config, null, 2), "utf8");
+  } catch (err) {
+    console.error("Error writing config file:", err);
+  }
+};
 
 let mainWindow;
 let websocketServer;
 let api;
-let config;
+let config = null;
 let updateInterval = 250;
 let updateSchedule;
+
+const extractSimvars = (config) => {
+  const simvars = [];
+
+  const extractFromControls = (controls) => {
+    controls.forEach((control) => {
+      if (control.simvar) {
+        if (Array.isArray(control.simvar)) {
+          simvars.push(...control.simvar);
+        } else {
+          simvars.push(control.simvar);
+        }
+      }
+    });
+  };
+
+  if (config.panels) {
+    config.panels.forEach((panel) => {
+      if (panel.controls) {
+        extractFromControls(panel.controls);
+      }
+    });
+  }
+
+  return simvars;
+};
 
 const updateStatus = () => {
   if (mainWindow && mainWindow.webContents) {
@@ -27,15 +72,17 @@ const updateStatus = () => {
 const startSchedule = () => {
   if (config && api.connected) {
     if (updateSchedule) clearInterval(updateSchedule);
+    const simvars = extractSimvars(config);
     updateSchedule = setInterval(() => {
       try {
-        api.get(...config).then((data) => {
-          websocketServer.send(
-            JSON.stringify({
-              type: "aircraft",
-              data,
-            })
-          );
+        api.get(...simvars).then((data) => {
+          if (websocketServer)
+            websocketServer.send(
+              JSON.stringify({
+                type: "aircraft",
+                data,
+              })
+            );
         });
       } catch (error) {
         clearInterval(updateSchedule);
@@ -79,7 +126,12 @@ const handleSimEvent = (id, value) => {
   }
 };
 
-const init = () => {
+const init = async () => {
+  // Load default config or prompt for a new config file
+  config =
+    (await loadConfigFromFile(path.join(__dirname, "config.json"))) || {};
+  console.log(config);
+
   ipcMain.handle("startServer", async () => {
     const localIp = IP.getLocalIp();
     console.log("Local IP address:", localIp);
@@ -99,12 +151,14 @@ const init = () => {
         handleSimEvent(message.simevent, message.value);
     });
 
-    websocketServer.onConfig((data) => {
-      config = data.message;
-      startSchedule();
-    });
-
     websocketServer.onClientConnect(() => {
+      startSchedule();
+      websocketServer.send(
+        JSON.stringify({
+          type: "cfg",
+          data: config,
+        })
+      );
       updateStatus();
     });
 
@@ -122,9 +176,46 @@ const init = () => {
   ipcMain.handle("stopServer", () => {
     if (websocketServer) {
       websocketServer.close();
+      websocketServer = null;
       console.log("Server stopped");
     } else {
       console.log("No server to stop");
+    }
+  });
+
+  ipcMain.handle("importConfig", async () => {
+    if (websocketServer) {
+      // Server is running, show error dialog
+      await dialog.showErrorBox(
+        "Import Error",
+        "Cannot import config while the server is running. Please stop the server first."
+      );
+      return null;
+    }
+
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ["openFile"],
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return null;
+    }
+
+    const filePath = result.filePaths[0];
+    const importedConfig = await loadConfigFromFile(filePath);
+
+    if (importedConfig) {
+      config = importedConfig;
+      await saveConfigToFile(path.join(__dirname, "config.json"), config);
+      console.log("Config imported and saved.");
+      return config;
+    } else {
+      await dialog.showErrorBox(
+        "Import Error",
+        "Failed to load the configuration file. Please ensure it is a valid JSON file."
+      );
+      return null;
     }
   });
 
@@ -145,7 +236,7 @@ const createWindow = () => {
     height: 400,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
-      devTools: false,
+      // devTools: false,
     },
     autoHideMenuBar: true,
     frame: false,

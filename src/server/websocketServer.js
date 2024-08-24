@@ -79,10 +79,6 @@ class WebSocketServer {
     this.onClientMessageCallback = callback;
   }
 
-  onConfig(callback) {
-    this.onConfigCallback = callback;
-  }
-
   onClientConnect(callback) {
     this.onClientConnectCallback = callback;
   }

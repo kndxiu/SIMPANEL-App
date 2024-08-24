@@ -1,3 +1,11 @@
+const roomCodeInput = document.getElementById("roomCode");
+const startButton = document.getElementById("startButton");
+const stopButton = document.getElementById("stopButton");
+const minimizeButton = document.getElementById("minimizeButton");
+const closeButton = document.getElementById("closeButton");
+const copyButton = document.getElementById("copyButton");
+const importConfigButton = document.getElementById("importConfig");
+
 const handleMinimize = () => {
   window.appFunctions.minimizeWindow();
 };
@@ -5,13 +13,6 @@ const handleMinimize = () => {
 const handleClose = () => {
   window.appFunctions.closeWindow();
 };
-
-const roomCodeInput = document.getElementById("roomCode");
-const startButton = document.getElementById("startButton");
-const stopButton = document.getElementById("stopButton");
-const minimizeButton = document.getElementById("minimizeButton");
-const closeButton = document.getElementById("closeButton");
-const copyButton = document.getElementById("copyButton");
 
 const createRoom = async () => {
   const ip = await window.appFunctions.startServer();
@@ -31,8 +32,13 @@ const copyCode = () => {
   navigator.clipboard.writeText(roomCodeInput.value);
 };
 
+const importConfig = () => {
+  window.appFunctions.importConfig();
+};
+
 startButton.addEventListener("click", createRoom);
 stopButton.addEventListener("click", closeRoom);
 minimizeButton.addEventListener("click", handleMinimize);
 closeButton.addEventListener("click", handleClose);
 copyButton.addEventListener("click", copyCode);
+importConfigButton.addEventListener("click", importConfig);

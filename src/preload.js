@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld("appFunctions", {
   closeWindow: () => ipcRenderer.send("close"),
   startServer: async () => await ipcRenderer.invoke("startServer"),
   stopServer: () => ipcRenderer.invoke("stopServer"),
+  importConfig: () => ipcRenderer.invoke("importConfig"),
 });
 
 ipcRenderer.on("status-update", (event, status) => {
