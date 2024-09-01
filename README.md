@@ -1,17 +1,15 @@
 <div align="center">
-  <a href="https://github.com/ShaanCoding/ReadME-Generator">
-    <img
-      src="https://simpanel.kndxiu.xyz/favicon.svg"
-      alt="Logo"
-      width="80"
-      height="80"
-    />
-  </a>
+  <img
+    src="https://simpanel.kndxiu.xyz/favicon.svg"
+    alt="Logo"
+    width="80"
+    height="80"
+  />
   <h3 align="center">SIMPANEL</h3>
   <p align="center">
     Control your aircraft with ease from the comfort of your seat. <br />
     <a href="https://simpanel.kndxiu.xyz">Project Website</a>
-    <a href="https://simpanel.kndxiu.xyz/contact">Support</a>
+    <a href="https://simpanel.kndxiu.xyz/#/contact">Support</a>
   </p>
 </div>
 
