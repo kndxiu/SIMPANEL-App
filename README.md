@@ -9,7 +9,7 @@
   <p align="center">
     Control your aircraft with ease from the comfort of your seat. <br />
     <a href="https://simpanel.kndxiu.xyz">Project Website</a>
-    <a href="https://simpanel.kndxiu.xyz/#/contact">Support</a>
+    <a href="https://simpanel.kndxiu.xyz/contact">Support</a>
   </p>
 </div>
 
