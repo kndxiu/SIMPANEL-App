@@ -25,3 +25,19 @@ ipcRenderer.on("status-update", (event, status) => {
     ? "Panel Connected"
     : "Panel Disconnected";
 });
+
+ipcRenderer.on("updateCheck", (event, data) => {
+  const { appVersion, fetchedVersion } = data;
+
+  const versionText = document.getElementById("version");
+  console.log(appVersion, fetchedVersion);
+
+  let content = `v${appVersion.toString().split("").join(".")} `;
+
+  if (appVersion >= fetchedVersion) content += "Latest";
+  else
+    content +=
+      "<a class='text-sky-500' target='_blank' href='https://simpanel.kndxiu.xyz/changelog'> Update Available</a>";
+
+  versionText.innerHTML = content;
+});

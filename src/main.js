@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "url";
 import WebSocketServer from "./server/websocketServer.js";
@@ -8,6 +8,14 @@ import { MSFS_API } from "msfs-simconnect-api-wrapper";
 import fs from "fs/promises";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const VERSION = 110;
+let mainWindow;
+let websocketServer;
+let api;
+let config = null;
+let updateInterval = 250;
+let updateSchedule;
 
 const loadConfigFromFile = async (filePath) => {
   try {
@@ -27,23 +35,15 @@ const saveConfigToFile = async (filePath, config) => {
   }
 };
 
-let mainWindow;
-let websocketServer;
-let api;
-let config = null;
-let updateInterval = 250;
-let updateSchedule;
-
 const extractSimvars = (config) => {
-  const simvars = [];
-
-  const extractFromControls = (controls) => {
+  const simvars = new Set();
+  const addSimvarsFromControls = (controls) => {
     controls.forEach((control) => {
       if (control.simvar) {
         if (Array.isArray(control.simvar)) {
-          simvars.push(...control.simvar);
+          control.simvar.forEach((v) => simvars.add(v));
         } else {
-          simvars.push(control.simvar);
+          simvars.add(control.simvar);
         }
       }
     });
@@ -51,13 +51,64 @@ const extractSimvars = (config) => {
 
   if (config.panels) {
     config.panels.forEach((panel) => {
-      if (panel.controls) {
-        extractFromControls(panel.controls);
-      }
+      if (panel.controls) addSimvarsFromControls(panel.controls);
     });
   }
 
-  return simvars;
+  if (config.events) {
+    config.events.forEach((event) => {
+      event.conditions.forEach((condition) => simvars.add(condition.simvar));
+    });
+  }
+
+  return Array.from(simvars);
+};
+
+const evaluateCondition = (condition, value) => {
+  switch (condition.condition) {
+    case ">":
+      return value > condition.value;
+    case "<":
+      return value < condition.value;
+    case ">=":
+      return value >= condition.value;
+    case "<=":
+      return value <= condition.value;
+    case "==":
+      return value == condition.value;
+    case "!=":
+      return value != condition.value;
+    default:
+      return false;
+  }
+};
+
+const areEventConditionsMet = (event, simvarData) => {
+  return event.conditions.every((condition) => {
+    const simvar = condition.simvar.replaceAll(" ", "_");
+    const simvarValue = simvarData[simvar];
+    return evaluateCondition(condition, simvarValue);
+  });
+};
+
+const executeEventActions = (actions) => {
+  actions.forEach((action) => {
+    if (action.simevent) handleSimEvent(action.simevent, action.value);
+    if (action.simvar && action.value !== undefined) {
+      handleSimvar(action.simvar, action.value);
+    }
+  });
+};
+
+const handleSimvar = (name, value) => {
+  if (api && api.connected) api.set(name, value);
+};
+
+const handleSimEvent = (id, value) => {
+  if (api && api.connected) {
+    if (value || value != undefined) api.trigger(id, value);
+    else api.trigger(id);
+  }
 };
 
 const updateStatus = () => {
@@ -70,33 +121,36 @@ const updateStatus = () => {
 };
 
 const startSchedule = () => {
-  if (config && api.connected) {
+  if (config && api && api.connected) {
     if (updateSchedule) clearInterval(updateSchedule);
     const simvars = extractSimvars(config);
+    let eventStatus = config.events.map(() => false);
+
     updateSchedule = setInterval(() => {
-      try {
-        api.get(...simvars).then((data) => {
-          if (websocketServer)
-            websocketServer.send(
-              JSON.stringify({
-                type: "aircraft",
-                data,
-              })
-            );
-        });
-      } catch (error) {
-        clearInterval(updateSchedule);
-        console.log(error);
-      }
+      api.get(...simvars).then((simvarData) => {
+        if (websocketServer) {
+          websocketServer.send(
+            JSON.stringify({
+              type: "aircraft",
+              data: simvarData,
+            })
+          );
+        }
+
+        if (config.events)
+          config.events.forEach((event, index) => {
+            const conditionsMet = areEventConditionsMet(event, simvarData);
+
+            if (conditionsMet && !eventStatus[index]) {
+              executeEventActions(event.actions);
+              eventStatus[index] = true;
+            } else if (!conditionsMet) {
+              eventStatus[index] = false;
+            }
+          });
+      });
     }, updateInterval);
   }
-};
-
-const onConnect = () => {
-  console.log("MSFS Connected");
-  api.connected = true;
-  updateStatus();
-  startSchedule();
 };
 
 const initMsfs = () => {
@@ -105,45 +159,42 @@ const initMsfs = () => {
     autoReconnect: true,
     retries: Infinity,
     retryInterval: 5,
-    onConnect,
-    onRetry: (_, s) => {
+    onConnect: () => {
+      api.connected = true;
+      updateStatus();
+      startSchedule();
+    },
+    onRetry: () => {
       api.connected = false;
       updateStatus();
     },
   });
 };
 
-const handleSimvar = (name, value) => {
-  if (api && api.connected) {
-    api.set(name, value);
-  }
-};
-
-const handleSimEvent = (id, value) => {
-  if (api && api.connected) {
-    if (value) api.trigger(id, value);
-    else api.trigger(id);
-  }
+const checkForUpdates = async () => {
+  fetch("https://api.github.com/repos/kndxiu/SIMPANEL-App/releases/latest")
+    .then((response) => response.json())
+    .then((data) => {
+      const versionName = data.name.split("simpanel-v").pop();
+      const versionNumber = parseInt(versionName.replace(/\./g, ""), 10);
+      if (mainWindow) {
+        mainWindow.webContents.send("updateCheck", {
+          appVersion: VERSION,
+          fetchedVersion: versionNumber,
+        });
+      }
+    });
 };
 
 const init = async () => {
-  // Load default config or prompt for a new config file
+  checkForUpdates();
   config =
     (await loadConfigFromFile(path.join(__dirname, "config.json"))) || {};
-  console.log(config);
 
   ipcMain.handle("startServer", async () => {
     const localIp = IP.getLocalIp();
-    console.log("Local IP address:", localIp);
-
     const ipInstance = new IP(localIp);
-    const encodedIp = ipInstance.toEncoded();
-
     websocketServer = new WebSocketServer(8056);
-
-    websocketServer.onHostMessage((message) => {
-      console.log("Message sent:", message);
-    });
 
     websocketServer.onClientMessage((message) => {
       if (message.simvar) handleSimvar(message.simvar, message.value);
@@ -153,24 +204,17 @@ const init = async () => {
 
     websocketServer.onClientConnect(() => {
       startSchedule();
-      websocketServer.send(
-        JSON.stringify({
-          type: "cfg",
-          data: config,
-        })
-      );
+      websocketServer.send(JSON.stringify({ type: "cfg", data: config }));
       updateStatus();
     });
 
     websocketServer.onClientDisconnect(() => {
-      if (updateSchedule) {
-        clearInterval(updateSchedule);
-        updateSchedule = null;
-      }
+      if (updateSchedule) clearInterval(updateSchedule);
+      updateSchedule = null;
       updateStatus();
     });
 
-    return encodedIp;
+    return ipInstance.toEncoded();
   });
 
   ipcMain.handle("stopServer", () => {
@@ -178,14 +222,11 @@ const init = async () => {
       websocketServer.close();
       websocketServer = null;
       console.log("Server stopped");
-    } else {
-      console.log("No server to stop");
     }
   });
 
   ipcMain.handle("importConfig", async () => {
     if (websocketServer) {
-      // Server is running, show error dialog
       await dialog.showErrorBox(
         "Import Error",
         "Cannot import config while the server is running. Please stop the server first."
@@ -198,9 +239,7 @@ const init = async () => {
       filters: [{ name: "JSON", extensions: ["json"] }],
     });
 
-    if (result.canceled || result.filePaths.length === 0) {
-      return null;
-    }
+    if (result.canceled || result.filePaths.length === 0) return null;
 
     const filePath = result.filePaths[0];
     const importedConfig = await loadConfigFromFile(filePath);
@@ -208,7 +247,6 @@ const init = async () => {
     if (importedConfig) {
       config = importedConfig;
       await saveConfigToFile(path.join(__dirname, "config.json"), config);
-      console.log("Config imported and saved.");
       return config;
     } else {
       await dialog.showErrorBox(
@@ -219,14 +257,8 @@ const init = async () => {
     }
   });
 
-  ipcMain.on("close", () => {
-    mainWindow.close();
-  });
-
-  ipcMain.on("minimize", () => {
-    mainWindow.minimize();
-  });
-
+  ipcMain.on("close", () => mainWindow.close());
+  ipcMain.on("minimize", () => mainWindow.minimize());
   initMsfs();
 };
 
@@ -236,31 +268,29 @@ const createWindow = () => {
     height: 400,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
-      // devTools: false,
     },
     autoHideMenuBar: true,
     frame: false,
     resizable: false,
     maximizable: false,
-    nodeIntegration: true,
     fullscreenable: false,
     icon: path.join(__dirname, "assets", "images", "icon.ico"),
   });
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
+  });
 
   init();
 };
 
-app.whenReady().then(() => {
-  createWindow();
+app.whenReady().then(createWindow);
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
 app.on("window-all-closed", () => {

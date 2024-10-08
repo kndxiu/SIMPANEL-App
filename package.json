@@ -1,7 +1,7 @@
 {
   "name": "SIMPANEL",
   "productName": "SIMPANEL",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "desc": "SIMPANEL App is a desktop application designed to connect with Microsoft Flight Simulator (MSFS) through a web interface. This application facilitates real-time control and monitoring of various simulator parameters by leveraging WebSocket technology for seamless communication over a local network (LAN). The app provides an intuitive and user-friendly interface, enabling users to interact with MSFS's controls and settings directly from their browser. With SIMPANEL App, users can customize and manage their simulation experience with precision and ease.",
   "main": "./src/main.js",
   "type": "module",
